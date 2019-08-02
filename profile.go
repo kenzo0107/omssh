@@ -28,13 +28,16 @@ func GetProfile(defCredentialsPath string) (profile string, err error) {
 
 	profiles := []string{}
 	var p string
-	var _p []string
+	var t []string
 	var profileWithAssumeRole string
-	for l := ""; err == nil; l, err = reader.ReadString('\n') {
+
+	for {
+		l, e := reader.ReadString('\n')
+
 		if strings.HasPrefix(l, "[") {
 			// profile tag line
-			_p = strings.Split(p, "=")
-			profileWithAssumeRole = _p[0]
+			t = strings.Split(p, "=")
+			profileWithAssumeRole = t[0]
 			if profileWithAssumeRole != "" {
 				profiles = append(profiles, p)
 			}
@@ -55,6 +58,14 @@ func GetProfile(defCredentialsPath string) (profile string, err error) {
 		if strings.HasPrefix(l, "source_profile") {
 			// source_profile
 			p = fmt.Sprintf("%s|%s", p, utility.ConvNewline(l, ""))
+		}
+
+		if e != nil {
+			profileWithAssumeRole = t[0]
+			if profileWithAssumeRole != "" {
+				profiles = append(profiles, p)
+			}
+			break
 		}
 	}
 
