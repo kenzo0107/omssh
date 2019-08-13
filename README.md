@@ -11,9 +11,7 @@ This project provides an interactive cli tool using ec2-instance-connect api to 
 ## Install  
 
 ```
-$ git clone https://github.com/kenzo0107/omssh
-$ cd omssh
-$ make build && make install
+$ go get -u github.com/kenzo0107/omssh
 ```
 
 ## LICENSE
