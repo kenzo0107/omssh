@@ -192,8 +192,8 @@ func fixVersionStr(v string) string {
 func checkLatest(version string) {
 	version = fixVersionStr(version)
 	githubTag := &latest.GithubTag{
-		Owner:             "fujiwara",
-		Repository:        "stretcher",
+		Owner:             "kenzo0107",
+		Repository:        "omssh",
 		FixVersionStrFunc: fixVersionStr,
 	}
 	res, err := latest.Check(githubTag, version)
