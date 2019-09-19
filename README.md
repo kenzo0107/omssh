@@ -19,3 +19,4 @@ $ go get -u github.com/kenzo0107/omssh
 The MIT License (MIT)
 
 Copyright (c) 2019 Kenzo Tanaka
+
