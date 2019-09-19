@@ -1,0 +1,10 @@
+---
+builds:
+  - main: cmd/omssh/main.go
+    binary: omssh
+    goos:
+      - windows
+      - darwin
+      - linux
+    goarch:
+      - amd64
