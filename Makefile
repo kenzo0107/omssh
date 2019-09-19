@@ -1,5 +1,5 @@
 NAME := omssh
-VERSION := $(gobump show -r cmd/omssh)
+VERSION := $(shell gobump show -r cmd/omssh)
 REVISION := $(shell git rev-parse --short HEAD)
 LDFLAGS := "-X main.version=$(VERSION) -X main.revision=$(REVISION)"
 
