@@ -55,18 +55,18 @@ func (d *EC2Client) GetEC2List() ([]EC2Info, error) {
 	for _, r := range res.Reservations {
 		for _, i := range r.Instances {
 
+			// public ip address
+			if i.PublicIpAddress == nil {
+				continue
+			}
+			publicIPAddress := *i.PublicIpAddress
+
 			// tag:Name
 			name := ""
 			for _, t := range i.Tags {
 				if *t.Key == "Name" {
 					name = *t.Value
 				}
-			}
-
-			// public ip address
-			publicIPAddress := ""
-			if i.PublicIpAddress != nil {
-				publicIPAddress = *i.PublicIpAddress
 			}
 
 			// private ip address
