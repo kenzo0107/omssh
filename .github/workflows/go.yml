@@ -20,7 +20,7 @@ jobs:
       run: go get -v -d
       
     - name: install golint
-      run: GO111MODULE=off go get github.com/golang/lint/golint
+      run: GO111MODULE=off go get golang.org/x/lint/golint
 
     - name: vet
       run: go vet ./...
