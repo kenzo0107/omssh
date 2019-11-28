@@ -1,4 +1,4 @@
-package omssh
+package awsapi
 
 import (
 	"fmt"

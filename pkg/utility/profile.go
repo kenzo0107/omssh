@@ -1,4 +1,4 @@
-package omssh
+package utility
 
 import (
 	"bufio"
@@ -9,8 +9,6 @@ import (
 	"strings"
 
 	fuzzyfinder "github.com/ktr0731/go-fuzzyfinder"
-
-	"github.com/kenzo0107/omssh/utility"
 )
 
 // GetProfile : return profile selected in .aws/credentials
@@ -47,17 +45,17 @@ func GetProfile(defCredentialsPath string) (profile string, err error) {
 
 		if strings.HasPrefix(l, "role_arn") {
 			// role_arn line
-			p = fmt.Sprintf("%s|%s", p, utility.ConvNewline(l, ""))
+			p = fmt.Sprintf("%s|%s", p, ConvNewline(l, ""))
 		}
 
 		if strings.HasPrefix(l, "mfa_serial") {
 			// mfa_serial line
-			p = fmt.Sprintf("%s|%s", p, utility.ConvNewline(l, ""))
+			p = fmt.Sprintf("%s|%s", p, ConvNewline(l, ""))
 		}
 
 		if strings.HasPrefix(l, "source_profile") {
 			// source_profile
-			p = fmt.Sprintf("%s|%s", p, utility.ConvNewline(l, ""))
+			p = fmt.Sprintf("%s|%s", p, ConvNewline(l, ""))
 		}
 
 		if e != nil {

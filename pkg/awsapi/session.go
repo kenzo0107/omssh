@@ -1,4 +1,4 @@
-package omssh
+package awsapi
 
 import (
 	"log"
@@ -9,6 +9,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
+
+	"github.com/kenzo0107/omssh/pkg/utility"
 )
 
 // NewSession : new session specified profile
@@ -30,7 +32,7 @@ func NewSession(profile, region string) *session.Session {
 
 // AssumeRoleWithSession : returns switched role session from argument session and IAM
 func AssumeRoleWithSession(region, defCredentialsPath string) (*session.Session, error) {
-	profileWithAssumeRole, err := GetProfile(defCredentialsPath)
+	profileWithAssumeRole, err := utility.GetProfile(defCredentialsPath)
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
