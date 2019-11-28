@@ -14,7 +14,7 @@ deps:
 .PHONY: deps
 devel-deps: deps
 	GO111MODULE=off go get \
-		github.com/golang/lint/golint \
+		golang.org/x/lint/golint \
 		github.com/motemen/gobump/cmd/gobump \
 		github.com/Songmu/make2help/cmd/make2help
 
@@ -50,7 +50,6 @@ help:
 .PHONY: clean
 clean:
 	rm -f bin/${NAME}
-	rm -f pkg/*
 
 .PHONY: release
 release:
