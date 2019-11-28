@@ -14,7 +14,7 @@ import (
 	latest "github.com/tcnksm/go-latest"
 )
 
-const version = "0.0.2"
+const version = "0.0.3"
 
 var (
 	buildDate string
