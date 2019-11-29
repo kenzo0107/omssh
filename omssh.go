@@ -23,17 +23,22 @@ const (
 var defCredentialsPath string
 
 func init() {
-	var configDir string
-	home := os.Getenv("HOME")
-	if home == "" && runtime.GOOS == "windows" {
-		// WindowsでHOME環境変数が定義されていない場合
-		configDir = os.Getenv("APPDATA")
+	credentialsPath := os.Getenv("CREDENTIALS_PATH")
+	if credentialsPath != "" {
+		defCredentialsPath = credentialsPath
 	} else {
-		configDir = home
+		var configDir string
+		home := os.Getenv("HOME")
+		if home == "" && runtime.GOOS == "windows" {
+			configDir = os.Getenv("APPDATA")
+		} else {
+			configDir = home
+		}
+		defCredentialsPath = filepath.Join(configDir, ".aws", "credentials")
 	}
-	defCredentialsPath = filepath.Join(configDir, ".aws", "credentials")
 }
 
+// Pre ... pre action of omssh
 func Pre(c *cli.Context) {
 	region := c.String("region")
 
