@@ -1,3 +1,4 @@
 .envrc
 cmd/omssh/omssh
 bin/*
+dist
