@@ -21,7 +21,7 @@ devel-deps: deps
 ## Run tests
 .PHONY: test
 test: deps
-	go test ./...
+	go test -v -count=1 -cover ./...
 
 ## Lint
 .PHONY: lint
