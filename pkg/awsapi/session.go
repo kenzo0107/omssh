@@ -31,8 +31,14 @@ func NewSession(profile, region string) *session.Session {
 }
 
 // AssumeRoleWithSession : returns switched role session from argument session and IAM
-func AssumeRoleWithSession(region, defCredentialsPath string) (*session.Session, error) {
-	profileWithAssumeRole, err := utility.GetProfile(defCredentialsPath)
+func AssumeRoleWithSession(region, credentialsPath string) (*session.Session, error) {
+	profiles, err := utility.GetProfiles(credentialsPath)
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+
+	profileWithAssumeRole, err := utility.FinderProfile(profiles)
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
