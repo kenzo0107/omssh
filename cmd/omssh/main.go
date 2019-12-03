@@ -74,11 +74,11 @@ func checkLatest(version string) {
 	}
 	res, err := latest.Check(githubTag, version)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return
 	}
 	if res.Outdated {
-		fmt.Printf("%s is not latest, you should upgrade to %s\n", version, res.Current)
+		log.Printf("%s is not latest, you should upgrade to %s\n", version, res.Current)
 	}
 }
 
