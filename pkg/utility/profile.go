@@ -5,26 +5,30 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/user"
 	"strings"
 
 	fuzzyfinder "github.com/ktr0731/go-fuzzyfinder"
 )
 
-// GetProfile : return profile selected in .aws/credentials
-func GetProfile(defCredentialsPath string) (profile string, err error) {
-	usr, _ := user.Current()
-	filePath := strings.Replace(defCredentialsPath, "~", usr.HomeDir, 1)
-	f, err := os.Open(filePath)
+// GetProfiles : return profiles selected in .aws/credentials
+func GetProfiles(credentialsPath string) (profiles []string, err error) {
+	home, err := os.UserHomeDir()
 	if err != nil {
-		fmt.Println("error")
-		return profile, err
+		log.Println(err)
+		return profiles, err
+	}
+
+	fpath := strings.Replace(credentialsPath, "~", home, 1)
+
+	f, err := os.Open(fpath)
+	if err != nil {
+		log.Println(err)
+		return profiles, err
 	}
 	defer f.Close()
 
 	reader := bufio.NewReaderSize(f, 4096)
 
-	profiles := []string{}
 	var p string
 	var t []string
 	var profileWithAssumeRole string
@@ -66,16 +70,11 @@ func GetProfile(defCredentialsPath string) (profile string, err error) {
 			break
 		}
 	}
-
-	profile, err = finderProfile(profiles)
-	if err != nil {
-		log.Fatal(err)
-		return profile, err
-	}
 	return
 }
 
-func finderProfile(profiles []string) (profile string, err error) {
+// FinderProfile : return profile selected in .aws/credentials
+func FinderProfile(profiles []string) (profile string, err error) {
 	idx, err := fuzzyfinder.FindMulti(
 		profiles,
 		func(i int) string {
