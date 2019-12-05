@@ -8,6 +8,8 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/ec2instanceconnect"
 	"github.com/patrickmn/go-cache"
 	"github.com/urfave/cli"
 	"golang.org/x/crypto/ssh"
@@ -23,7 +25,7 @@ const (
 var defCredentialsPath string
 
 func init() {
-	credentialsPath := os.Getenv("CREDENTIALS_PATH")
+	credentialsPath := os.Getenv("AWS_SHARED_CREDENTIALS_FILE")
 	if credentialsPath != "" {
 		defCredentialsPath = credentialsPath
 	} else {
@@ -48,12 +50,16 @@ func Pre(c *cli.Context) {
 		return
 	}
 
-	// get ec2 list
-	ec2Client := awsapi.NewEC2(sess)
-	ec2List, _ := ec2Client.GetEC2List()
+	// get list of ec2 instances
+	ec2Svc := ec2.New(sess)
+	ec2Instances, err := awsapi.DescribeRunningEC2Instances(ec2Svc)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
 
 	// select an ec2 instance
-	ec2, err := awsapi.FinderEC2Info(ec2List)
+	ec2, err := awsapi.FinderEC2Instance(ec2Instances)
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -72,11 +78,15 @@ func Pre(c *cli.Context) {
 	publicKey, privateKey := sshKeyGen()
 
 	// use ec2 instance connect to send public key
-	e := awsapi.NewEC2InstanceConnect(sess)
-	e.SendSSHPubKey(user, ec2.InstanceID, publicKey, ec2.AvailabilityZone)
+	ec2instanceconnectSvc := ec2instanceconnect.New(sess)
+	r, err := awsapi.SendSSHPubKey(ec2instanceconnectSvc, user, ec2.InstanceID, publicKey, ec2.AvailabilityZone)
+	if err != nil || !r {
+		log.Fatal(err)
+		return
+	}
 
 	// ssh -i <temporary ssh private key> <user>@<public ip address>
-	fmt.Printf("ssh %s@%s -p %s [%s]\n", user, ec2.PublicIPAddress, c.String("port"), ec2.InstanceID)
+	log.Printf("ssh %s@%s -p %s [%s]\n", user, ec2.PublicIPAddress, c.String("port"), ec2.InstanceID)
 	doSSH(user, ec2.PublicIPAddress, c.String("port"), privateKey)
 }
 
