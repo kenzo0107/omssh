@@ -13,8 +13,7 @@ import (
 	"github.com/kenzo0107/omssh/pkg/utility"
 )
 
-// NewSession : new session specified profile
-func NewSession(profile, region string) *session.Session {
+func newSession(profile, region string) *session.Session {
 	var config aws.Config
 	if profile != "" {
 		creds := credentials.NewSharedCredentials("", profile)
@@ -73,7 +72,7 @@ func AssumeRoleWithSession(region, credentialsPath string) (*session.Session, er
 			}
 		}
 
-		sourceSess := NewSession(sourceProfile, region)
+		sourceSess := newSession(sourceProfile, region)
 
 		creds := stscreds.NewCredentials(sourceSess, roleArn, func(o *stscreds.AssumeRoleProvider) {
 			o.Duration = time.Hour
@@ -89,7 +88,7 @@ func AssumeRoleWithSession(region, credentialsPath string) (*session.Session, er
 			Profile: profile,
 		}))
 	} else {
-		sess = NewSession(profile, region)
+		sess = newSession(profile, region)
 	}
 	return sess, nil
 }
