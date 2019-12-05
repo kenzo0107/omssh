@@ -5,16 +5,10 @@ import (
 	"log"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	fuzzyfinder "github.com/ktr0731/go-fuzzyfinder"
 )
-
-// EC2Client : ec2 client
-type EC2Client struct {
-	sess *session.Session
-	svc  *ec2.EC2
-}
 
 // EC2Info : required ec2 instance information
 type EC2Info struct {
@@ -26,14 +20,8 @@ type EC2Info struct {
 	AvailabilityZone string
 }
 
-// NewEC2 : new ec2 client
-func NewEC2(sess *session.Session) *EC2Client {
-	svc := ec2.New(sess)
-	return &EC2Client{sess, svc}
-}
-
-// GetEC2List : get list of ec2 instances
-func (d *EC2Client) GetEC2List() ([]EC2Info, error) {
+// DescribeRunningEC2Instances : get list of running ec2 instances
+func DescribeRunningEC2Instances(svc ec2iface.EC2API) ([]EC2Info, error) {
 	// condition: running instance only
 	input := &ec2.DescribeInstancesInput{
 		Filters: []*ec2.Filter{
@@ -46,7 +34,7 @@ func (d *EC2Client) GetEC2List() ([]EC2Info, error) {
 		},
 	}
 
-	res, err := d.svc.DescribeInstances(input)
+	res, err := svc.DescribeInstances(input)
 	if err != nil {
 		return nil, err
 	}
@@ -89,8 +77,8 @@ func (d *EC2Client) GetEC2List() ([]EC2Info, error) {
 	return e, nil
 }
 
-// FinderEC2Info : find information of ec2 instance through fuzzyfinder
-func FinderEC2Info(ec2List []EC2Info) (ec2Info EC2Info, err error) {
+// FinderEC2Instance : find information of ec2 instance through fuzzyfinder
+func FinderEC2Instance(ec2List []EC2Info) (ec2Info EC2Info, err error) {
 	idx, err := fuzzyfinder.FindMulti(
 		ec2List,
 		func(i int) string {

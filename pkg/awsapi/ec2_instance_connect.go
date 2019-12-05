@@ -4,34 +4,22 @@ import (
 	"log"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2instanceconnect"
+	"github.com/aws/aws-sdk-go/service/ec2instanceconnect/ec2instanceconnectiface"
 )
 
-// EC2InstanceConnectClient : ec2 instance connect client
-type EC2InstanceConnectClient struct {
-	sess *session.Session
-	svc  *ec2instanceconnect.EC2InstanceConnect
-}
-
-// NewEC2InstanceConnect : new ec2 instance connect client
-func NewEC2InstanceConnect(sess *session.Session) *EC2InstanceConnectClient {
-	svc := ec2instanceconnect.New(sess)
-	return &EC2InstanceConnectClient{sess, svc}
-}
-
 // SendSSHPubKey : send ssh public key to using ec2 instance api
-func (d *EC2InstanceConnectClient) SendSSHPubKey(user, instanceID, publicKey, availabilityZone string) error {
+func SendSSHPubKey(svc ec2instanceconnectiface.EC2InstanceConnectAPI, user, instanceID, publicKey, availabilityZone string) (bool, error) {
 	input := &ec2instanceconnect.SendSSHPublicKeyInput{
 		AvailabilityZone: aws.String(availabilityZone),
 		InstanceId:       aws.String(instanceID),
 		InstanceOSUser:   aws.String(user),
 		SSHPublicKey:     aws.String(publicKey),
 	}
-	_, err := d.svc.SendSSHPublicKey(input)
+	r, err := svc.SendSSHPublicKey(input)
 	if err != nil {
 		log.Fatal(err)
-		return err
+		return *r.Success, err
 	}
-	return nil
+	return *r.Success, nil
 }
