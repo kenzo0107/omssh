@@ -2,6 +2,7 @@ package utility
 
 import (
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"reflect"
@@ -15,51 +16,38 @@ import (
 )
 
 var (
-	testProfiles = []string{"hoge", "moge"}
+	testProfiles = []string{"default", "hoge", "moge"}
 	real         = flag.Bool("real", false, "display the actual layout to the terminal")
 )
 
 func TestGetProfilesByTestCredentialsPath(t *testing.T) {
-	cp := "../../testdata/credentials"
+	cp := filepath.Join("..", "..", "testdata", "credentials")
 	profiles, err := GetProfiles(cp)
 	if err != nil {
 		t.Error("cannot get profiles from credentilas path")
 	}
 	if !reflect.DeepEqual(profiles, testProfiles) {
-		t.Error("GetProfiles(\"../../testdata/credentials\") should be []string{\"hoge\", \"moge\"}, but does not match.")
+		t.Errorf("GetProfiles(\"%s\") should be []string{\"default\", \"hoge\", \"moge\"}, but does not match.", cp)
 	}
 }
 
 func TestGetProfilesByEmptyCredentialsPath(t *testing.T) {
 	profiles, err := GetProfiles("")
-	actual := err.Error()
-	expected := "open : no such file or directory"
-	if diff := cmp.Diff(expected, actual); diff != "" {
-		t.Errorf("wrong result: \n%s", diff)
+	if e, a := "open : no such file or directory", err.Error(); e != a {
+		t.Errorf("expect %v, got %v", e, a)
 	}
 	if len(profiles) != 0 {
 		t.Error("wrong result: profiles = []string{}")
 	}
 }
 
-func TestFinderProfileHoge(t *testing.T) {
-	keys := func(str string) []termbox.Event {
-		s := []rune(str)
-		e := make([]termbox.Event, 0, len(s))
-		for _, r := range s {
-			e = append(e, termbox.Event{Type: termbox.EventKey, Ch: r})
-		}
-		return e
-	}
-
+func finderProfileTesting(t *testing.T, expectedProfile string) {
 	term := fuzzyfinder.UseMockedTerminal()
 	term.SetSize(60, 10)
 
-	expectedProfile := "hoge"
 	term.SetEvents(append(
-		keys(expectedProfile),
+		TermboxKeys(expectedProfile),
 		termbox.Event{Type: termbox.EventKey, Key: termbox.KeyEnter})...)
-
 	actualProfile, err := FinderProfile(testProfiles)
 	if err != nil {
 		t.Error("cannot get profile")
@@ -67,10 +55,11 @@ func TestFinderProfileHoge(t *testing.T) {
 	if diff := cmp.Diff(expectedProfile, actualProfile); diff != "" {
 		t.Errorf("wrong result: \n%s", diff)
 	}
-
 	actual := term.GetResult()
 
-	fname := filepath.Join("..", "..", "testdata", "finderprofiles_hoge_ui.golden")
+	g := fmt.Sprintf("finder_profiles_%s_ui.golden", expectedProfile)
+	fname := filepath.Join("..", "..", "testdata", g)
+	// ioutil.WriteFile(fname, []byte(actual), 0644)
 	b, err := ioutil.ReadFile(fname)
 	if err != nil {
 		t.Fatalf("failed to load a golden file: %s", err)
@@ -85,45 +74,33 @@ func TestFinderProfileHoge(t *testing.T) {
 	}
 }
 
-func TestFinderProfileMoge(t *testing.T) {
-	keys := func(str string) []termbox.Event {
-		s := []rune(str)
-		e := make([]termbox.Event, 0, len(s))
-		for _, r := range s {
-			e = append(e, termbox.Event{Type: termbox.EventKey, Ch: r})
-		}
-		return e
-	}
-
+func TestFinderProfile(t *testing.T) {
 	term := fuzzyfinder.UseMockedTerminal()
 	term.SetSize(60, 10)
 
-	expectedProfile := "moge"
-	term.SetEvents(append(
-		keys(expectedProfile),
-		termbox.Event{Type: termbox.EventKey, Key: termbox.KeyEnter})...)
-
-	actualProfile, err := FinderProfile(testProfiles)
-	if err != nil {
-		t.Error("cannot get profile")
-	}
-	if diff := cmp.Diff(expectedProfile, actualProfile); diff != "" {
-		t.Errorf("wrong result: \n%s", diff)
-	}
-
-	actual := term.GetResult()
-
-	fname := filepath.Join("..", "..", "testdata", "finderprofiles_moge_ui.golden")
-	b, err := ioutil.ReadFile(fname)
-	if err != nil {
-		t.Fatalf("failed to load a golden file: %s", err)
-	}
-	expected := string(b)
-	if runtime.GOOS == "windows" {
-		expected = strings.Replace(expected, "\r\n", "\n", -1)
-	}
-
-	if diff := cmp.Diff(expected, actual); diff != "" {
-		t.Errorf("wrong result: \n%s", diff)
+	for _, testcase := range []struct {
+		name string
+		call func(t *testing.T)
+	}{
+		{
+			"profile default",
+			func(t *testing.T) {
+				finderProfileTesting(t, "default")
+			},
+		},
+		{
+			"profile hoge",
+			func(t *testing.T) {
+				finderProfileTesting(t, "hoge")
+			},
+		},
+		{
+			"profile moge",
+			func(t *testing.T) {
+				finderProfileTesting(t, "moge")
+			},
+		},
+	} {
+		t.Run(testcase.name, testcase.call)
 	}
 }
