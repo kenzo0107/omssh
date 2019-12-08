@@ -14,6 +14,8 @@ jobs:
         go-version: ${{ matrix.go-version }}
     - name: Checkout code
       uses: actions/checkout@v1
+    - name: install golint
+      run: GO111MODULE=off go get golang.org/x/lint/golint
     - name: Vet
       run: go vet ./...
     - name: Lint
