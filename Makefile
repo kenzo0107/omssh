@@ -11,7 +11,7 @@ deps:
 	go get -v -d
 
 ## Setup
-.PHONY: deps
+.PHONY: devel-deps
 devel-deps: deps
 	GO111MODULE=off go get \
 		golang.org/x/lint/golint \
