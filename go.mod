@@ -9,6 +9,7 @@ require (
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/hashicorp/go-version v1.2.0 // indirect
 	github.com/kenzo0107/sshkeygen v0.0.0-20190727143825-8bab90ec9499
+	github.com/kr/pretty v0.1.0 // indirect
 	github.com/ktr0731/go-fuzzyfinder v0.1.2
 	github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -18,4 +19,5 @@ require (
 	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4
 	golang.org/x/net v0.0.0-20190620200207-3b0461eec859 // indirect
 	golang.org/x/sys v0.0.0-20190626150813-e07cf5db2756 // indirect
+	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 )
