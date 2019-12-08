@@ -1,7 +1,6 @@
 package utility
 
 import (
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -17,7 +16,6 @@ import (
 
 var (
 	testProfiles = []string{"default", "hoge", "moge"}
-	real         = flag.Bool("real", false, "display the actual layout to the terminal")
 )
 
 func TestGetProfilesByTestCredentialsPath(t *testing.T) {

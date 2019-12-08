@@ -26,7 +26,12 @@ func newSession(profile, region string) *session.Session {
 			Region: aws.String(region),
 		}
 	}
-	return session.New(&config)
+	sess, err := session.NewSession(&config)
+	if err != nil {
+		log.Fatal(err)
+		return nil
+	}
+	return sess
 }
 
 // AssumeRoleWithSession : returns switched role session from argument session and IAM

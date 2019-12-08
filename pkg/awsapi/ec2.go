@@ -124,18 +124,13 @@ func FinderUsername() (user string, err error) {
 	idx, err := fuzzyfinder.FindMulti(
 		users,
 		func(i int) string {
-			return fmt.Sprintf("%s",
-				users[i],
-			)
+			return users[i]
 		},
 		fuzzyfinder.WithPreviewWindow(func(i, w, h int) string {
 			if i == -1 {
 				return ""
 			}
-			return fmt.Sprintf(
-				"%s",
-				users[i],
-			)
+			return users[i]
 		}),
 	)
 

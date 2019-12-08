@@ -78,9 +78,7 @@ func FinderProfile(profiles []string) (profile string, err error) {
 	idx, err := fuzzyfinder.FindMulti(
 		profiles,
 		func(i int) string {
-			return fmt.Sprintf("%s",
-				profiles[i],
-			)
+			return profiles[i]
 		},
 		fuzzyfinder.WithPreviewWindow(func(i, w, h int) string {
 			if i == -1 {
