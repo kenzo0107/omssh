@@ -67,9 +67,9 @@ func Pre(c *cli.Context) {
 
 	user := defUser
 	if c.Bool("user") {
-		u, err := awsapi.FinderUsername()
-		if err != nil {
-			log.Fatal(err)
+		u, e := awsapi.FinderUsername()
+		if e != nil {
+			log.Fatal(e)
 			return
 		}
 		user = u
