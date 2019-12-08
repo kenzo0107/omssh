@@ -15,6 +15,7 @@ deps:
 devel-deps: deps
 	GO111MODULE=off go get \
 		golang.org/x/lint/golint \
+		honnef.co/go/tools/staticcheck \
 		github.com/motemen/gobump/cmd/gobump \
 		github.com/Songmu/make2help/cmd/make2help
 
