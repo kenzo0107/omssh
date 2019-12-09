@@ -137,7 +137,13 @@ func doSSH(user, host, port string, privateKey []byte) {
 
 	session, err := client.NewSession()
 	ce(err, "new session")
-	defer session.Close()
+
+	defer func() {
+		err = session.Close()
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}()
 
 	session.Stdout = os.Stdout
 	session.Stderr = os.Stderr

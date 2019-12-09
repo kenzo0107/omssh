@@ -25,7 +25,13 @@ func GetProfiles(credentialsPath string) (profiles []string, err error) {
 		log.Println(err)
 		return profiles, err
 	}
-	defer f.Close()
+
+	defer func() {
+		err = f.Close()
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}()
 
 	reader := bufio.NewReaderSize(f, 4096)
 

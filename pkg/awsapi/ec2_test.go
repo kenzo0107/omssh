@@ -134,7 +134,7 @@ func finderEC2Testing(t *testing.T, types string, expectedEC2 EC2Info) {
 
 	g := fmt.Sprintf("finder_ec2_%s_ui.golden", types)
 	fname := filepath.Join("..", "..", "testdata", g)
-	ioutil.WriteFile(fname, []byte(actual), 0644)
+	// ioutil.WriteFile(fname, []byte(actual), 0644)
 	b, err := ioutil.ReadFile(fname)
 	if err != nil {
 		t.Fatalf("failed to load a golden file: %s", err)

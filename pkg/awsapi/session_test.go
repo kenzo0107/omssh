@@ -8,7 +8,9 @@ import (
 
 func TestNewSession(t *testing.T) {
 	fname := filepath.Join("..", "..", "testdata", "credentials")
-	os.Setenv("AWS_SHARED_CREDENTIALS_FILE", fname)
+	if err := os.Setenv("AWS_SHARED_CREDENTIALS_FILE", fname); err != nil {
+		t.Error("error occured in os.Setenv(\"AWS_SHARED_CREDENTIALS_FILE\")")
+	}
 
 	for _, testcase := range []struct {
 		name string
