@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	fuzzyfinder "github.com/ktr0731/go-fuzzyfinder"
@@ -12,15 +13,7 @@ import (
 
 // GetProfiles : return profiles selected in .aws/credentials
 func GetProfiles(credentialsPath string) (profiles []string, err error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		log.Println(err)
-		return profiles, err
-	}
-
-	fpath := strings.Replace(credentialsPath, "~", home, 1)
-
-	f, err := os.Open(fpath)
+	f, err := os.Open(filepath.Clean(credentialsPath))
 	if err != nil {
 		log.Println(err)
 		return profiles, err
