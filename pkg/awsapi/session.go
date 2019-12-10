@@ -28,7 +28,6 @@ func newSession(profile, region string) *session.Session {
 	}
 	sess, err := session.NewSession(&config)
 	if err != nil {
-		log.Fatal(err)
 		return nil
 	}
 	return sess
