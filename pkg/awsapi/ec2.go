@@ -2,7 +2,6 @@ package awsapi
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -10,8 +9,8 @@ import (
 	fuzzyfinder "github.com/ktr0731/go-fuzzyfinder"
 )
 
-// EC2Info : required ec2 instance information
-type EC2Info struct {
+// EC2Instance : required ec2 instance information
+type EC2Instance struct {
 	InstanceID       string
 	PublicIPAddress  string
 	PrivateIPAddress string
@@ -21,7 +20,7 @@ type EC2Info struct {
 }
 
 // DescribeRunningEC2Instances : get list of running ec2 instances
-func DescribeRunningEC2Instances(svc ec2iface.EC2API) ([]EC2Info, error) {
+func DescribeRunningEC2Instances(svc ec2iface.EC2API) ([]EC2Instance, error) {
 	// condition: running instance only
 	input := &ec2.DescribeInstancesInput{
 		Filters: []*ec2.Filter{
@@ -39,7 +38,7 @@ func DescribeRunningEC2Instances(svc ec2iface.EC2API) ([]EC2Info, error) {
 		return nil, err
 	}
 
-	e := []EC2Info{}
+	e := []EC2Instance{}
 	for _, r := range res.Reservations {
 		for _, i := range r.Instances {
 
@@ -63,7 +62,7 @@ func DescribeRunningEC2Instances(svc ec2iface.EC2API) ([]EC2Info, error) {
 				privateIPAddress = *i.PrivateIpAddress
 			}
 
-			e = append(e, EC2Info{
+			e = append(e, EC2Instance{
 				InstanceID:       *i.InstanceId,
 				InstanceType:     *i.InstanceType,
 				PublicIPAddress:  publicIPAddress,
@@ -78,7 +77,7 @@ func DescribeRunningEC2Instances(svc ec2iface.EC2API) ([]EC2Info, error) {
 }
 
 // FinderEC2Instance : find information of ec2 instance through fuzzyfinder
-func FinderEC2Instance(ec2List []EC2Info) (ec2Info EC2Info, err error) {
+func FinderEC2Instance(ec2List []EC2Instance) (EC2Instance EC2Instance, err error) {
 	idx, err := fuzzyfinder.FindMulti(
 		ec2List,
 		func(i int) string {
@@ -104,23 +103,18 @@ func FinderEC2Instance(ec2List []EC2Info) (ec2Info EC2Info, err error) {
 	)
 
 	if err != nil {
-		log.Fatal(err)
-		return ec2Info, err
+		return EC2Instance, err
 	}
 
 	for _, i := range idx {
-		ec2Info = ec2List[i]
+		EC2Instance = ec2List[i]
 	}
 
-	return ec2Info, nil
+	return EC2Instance, nil
 }
 
 // FinderUsername : find ssh username through fuzzyfinder
-func FinderUsername() (user string, err error) {
-	users := []string{
-		"ubuntu",
-		"ec2-user",
-	}
+func FinderUsername(users []string) (user string, err error) {
 	idx, err := fuzzyfinder.FindMulti(
 		users,
 		func(i int) string {
@@ -135,7 +129,6 @@ func FinderUsername() (user string, err error) {
 	)
 
 	if err != nil {
-		log.Fatal(err)
 		return user, err
 	}
 

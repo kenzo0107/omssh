@@ -22,7 +22,10 @@ const (
 	defUser = "ubuntu"
 )
 
-var defCredentialsPath string
+var (
+	defCredentialsPath string
+	defUsers           = []string{"ubuntu", "ec2-user"}
+)
 
 func init() {
 	credentialsPath := os.Getenv("AWS_SHARED_CREDENTIALS_FILE")
@@ -67,7 +70,7 @@ func Pre(c *cli.Context) {
 
 	user := defUser
 	if c.Bool("user") {
-		u, e := awsapi.FinderUsername()
+		u, e := awsapi.FinderUsername(defUsers)
 		if e != nil {
 			log.Fatal(e)
 			return
