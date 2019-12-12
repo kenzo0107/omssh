@@ -92,7 +92,6 @@ func FinderProfile(profiles []string) (profile string, err error) {
 	)
 
 	if err != nil {
-		log.Fatal(err)
 		return profile, err
 	}
 
