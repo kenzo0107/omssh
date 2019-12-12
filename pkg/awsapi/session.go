@@ -1,19 +1,15 @@
 package awsapi
 
 import (
-	"log"
 	"strings"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
-
-	"github.com/kenzo0107/omssh/pkg/utility"
 )
 
-func newSession(profile, region string) *session.Session {
+// NewSession : return new session
+func NewSession(profile, region string) *session.Session {
 	var config aws.Config
 	if profile != "" {
 		creds := credentials.NewSharedCredentials("", profile)
@@ -26,37 +22,15 @@ func newSession(profile, region string) *session.Session {
 			Region: aws.String(region),
 		}
 	}
-	sess, err := session.NewSession(&config)
-	if err != nil {
-		return nil
-	}
-	return sess
+	return session.Must(session.NewSession(&config))
 }
 
-// AssumeRoleWithSession : returns switched role session from argument session and IAM
-func AssumeRoleWithSession(region, credentialsPath string) (*session.Session, error) {
-	profiles, err := utility.GetProfiles(credentialsPath)
-	if err != nil {
-		log.Fatal(err)
-		return nil, err
-	}
-
-	profileWithAssumeRole, err := utility.FinderProfile(profiles)
-	if err != nil {
-		log.Fatal(err)
-		return nil, err
-	}
-
+// GetProfileWithAssumeRole : get profile with assume role and etc...
+func GetProfileWithAssumeRole(profileWithAssumeRole string) (profile, roleArn, mfaSerial, sourceProfile string) {
 	_p := strings.Split(profileWithAssumeRole, "|")
-	profile := _p[0]
-
-	var sess *session.Session
+	profile = _p[0]
 
 	if len(_p) > 1 {
-		var roleArn string
-		var mfaSerial string
-		var sourceProfile string
-
 		for _, t := range _p {
 			f := strings.Split(t, "=")
 			if len(f) < 2 {
@@ -75,24 +49,6 @@ func AssumeRoleWithSession(region, credentialsPath string) (*session.Session, er
 				sourceProfile = v
 			}
 		}
-
-		sourceSess := newSession(sourceProfile, region)
-
-		creds := stscreds.NewCredentials(sourceSess, roleArn, func(o *stscreds.AssumeRoleProvider) {
-			o.Duration = time.Hour
-			o.RoleSessionName = sourceProfile
-			o.SerialNumber = aws.String(mfaSerial)
-			o.TokenProvider = stscreds.StdinTokenProvider
-		})
-
-		config := aws.Config{Region: aws.String(region), Credentials: creds}
-
-		sess = session.Must(session.NewSessionWithOptions(session.Options{
-			Config:  config,
-			Profile: profile,
-		}))
-	} else {
-		sess = newSession(profile, region)
 	}
-	return sess, nil
+	return
 }
