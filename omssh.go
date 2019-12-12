@@ -6,8 +6,12 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2instanceconnect"
 	"github.com/patrickmn/go-cache"
@@ -15,6 +19,7 @@ import (
 	"golang.org/x/crypto/ssh"
 
 	awsapi "github.com/kenzo0107/omssh/pkg/awsapi"
+	"github.com/kenzo0107/omssh/pkg/utility"
 	sshkey "github.com/kenzo0107/sshkeygen"
 )
 
@@ -23,15 +28,13 @@ const (
 )
 
 var (
-	defCredentialsPath string
-	defUsers           = []string{"ubuntu", "ec2-user"}
+	credentialsPath string
+	defUsers        = []string{"ubuntu", "ec2-user"}
 )
 
 func init() {
-	credentialsPath := os.Getenv("AWS_SHARED_CREDENTIALS_FILE")
-	if credentialsPath != "" {
-		defCredentialsPath = credentialsPath
-	} else {
+	credentialsPath = os.Getenv("AWS_SHARED_CREDENTIALS_FILE")
+	if credentialsPath == "" {
 		var configDir string
 		home := os.Getenv("HOME")
 		if home == "" && runtime.GOOS == "windows" {
@@ -39,7 +42,7 @@ func init() {
 		} else {
 			configDir = home
 		}
-		defCredentialsPath = filepath.Join(configDir, ".aws", "credentials")
+		credentialsPath = filepath.Join(configDir, ".aws", "credentials")
 	}
 }
 
@@ -47,22 +50,57 @@ func init() {
 func Pre(c *cli.Context) {
 	region := c.String("region")
 
-	sess, err := awsapi.AssumeRoleWithSession(region, defCredentialsPath)
+	profiles, err := utility.GetProfiles(credentialsPath)
 	if err != nil {
-		log.Fatal(err)
 		return
+	}
+
+	profileWithAssumeRole, err := utility.FinderProfile(profiles)
+	if err != nil {
+		return
+	}
+
+	_p := strings.Split(profileWithAssumeRole, "|")
+
+	var sess *session.Session
+	if len(_p) > 1 {
+		profile, roleArn, mfaSerial, sourceProfile := awsapi.GetProfileWithAssumeRole(profileWithAssumeRole)
+
+		sourceSess := awsapi.NewSession(sourceProfile, region)
+
+		f := func(o *stscreds.AssumeRoleProvider) {
+			o.Duration = time.Hour
+			o.RoleSessionName = sourceProfile
+			o.SerialNumber = aws.String(mfaSerial)
+			o.TokenProvider = stscreds.StdinTokenProvider
+		}
+
+		creds := stscreds.NewCredentials(sourceSess, roleArn, f)
+
+		config := aws.Config{
+			Region:      aws.String(region),
+			Credentials: creds,
+		}
+
+		sess = session.Must(session.NewSessionWithOptions(session.Options{
+			Config:  config,
+			Profile: profile,
+		}))
+	} else {
+		profile := _p[0]
+		sess = awsapi.NewSession(profile, region)
 	}
 
 	// get list of ec2 instances
-	ec2Svc := ec2.New(sess)
-	ec2Instances, err := awsapi.DescribeRunningEC2Instances(ec2Svc)
+	ec2Client := awsapi.NewEC2Client(ec2.New(sess))
+	ec2Instances, err := ec2Client.DescribeRunningEC2s()
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	// select an ec2 instance
-	ec2, err := awsapi.FinderEC2Instance(ec2Instances)
+	// select an ec2
+	ec2, err := awsapi.FinderEC2(ec2Instances)
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -82,7 +120,17 @@ func Pre(c *cli.Context) {
 
 	// use ec2 instance connect to send public key
 	ec2instanceconnectSvc := ec2instanceconnect.New(sess)
-	r, err := awsapi.SendSSHPubKey(ec2instanceconnectSvc, user, ec2.InstanceID, publicKey, ec2.AvailabilityZone)
+
+	input := ec2instanceconnect.SendSSHPublicKeyInput{
+		AvailabilityZone: aws.String(ec2.AvailabilityZone),
+		InstanceId:       aws.String(ec2.InstanceID),
+		InstanceOSUser:   aws.String(user),
+		SSHPublicKey:     aws.String(publicKey),
+	}
+
+	ec2InstanceConnectClient := awsapi.NewEC2InstanceConnectClient(ec2instanceconnectSvc)
+	r, err := ec2InstanceConnectClient.SendSSHPubKey(input)
+
 	if err != nil || !r {
 		log.Fatal(err)
 		return
