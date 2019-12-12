@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	testEC2Instances = []EC2Instance{
-		EC2Instance{
+	testEC2s = []EC2{
+		EC2{
 			InstanceID:       "i-aaaaaa",
 			PublicIPAddress:  "12.34.56.01",
 			PrivateIPAddress: "192.168.10.1",
@@ -23,7 +23,7 @@ var (
 			AvailabilityZone: "ap-northeast-1a",
 			InstanceName:     "hoge",
 		},
-		EC2Instance{
+		EC2{
 			InstanceID:       "i-bbbbbb",
 			PublicIPAddress:  "12.34.56.02",
 			PrivateIPAddress: "192.168.10.2",
@@ -36,142 +36,143 @@ var (
 
 type mockEC2Client struct {
 	ec2iface.EC2API
+
+	Resp  ec2.DescribeInstancesOutput
+	Error error
 }
 
 func (m *mockEC2Client) DescribeInstances(input *ec2.DescribeInstancesInput) (*ec2.DescribeInstancesOutput, error) {
-	return &ec2.DescribeInstancesOutput{
-		Reservations: []*ec2.Reservation{
-			{
-				Instances: []*ec2.Instance{
-					{
-						InstanceId:       aws.String("i-aaaaaa"),
-						InstanceType:     aws.String("t3.micro"),
-						PublicIpAddress:  aws.String("12.34.56.01"),
-						PrivateIpAddress: aws.String("192.168.10.1"),
-						Placement: &ec2.Placement{
-							AvailabilityZone: aws.String("ap-northeast-1a"),
-						},
-						Tags: []*ec2.Tag{
-							{
-								Key:   aws.String("Name"),
-								Value: aws.String("hoge"),
+	return &m.Resp, m.Error
+}
+
+func TestDescribeRunningEC2s(t *testing.T) {
+	m := NewEC2Client(&mockEC2Client{
+		Error: nil,
+		Resp: ec2.DescribeInstancesOutput{
+			Reservations: []*ec2.Reservation{
+				{
+					Instances: []*ec2.Instance{
+						{
+							InstanceId:       aws.String("i-aaaaaa"),
+							InstanceType:     aws.String("t3.micro"),
+							PublicIpAddress:  aws.String("12.34.56.01"),
+							PrivateIpAddress: aws.String("192.168.10.1"),
+							Placement: &ec2.Placement{
+								AvailabilityZone: aws.String("ap-northeast-1a"),
+							},
+							Tags: []*ec2.Tag{
+								{
+									Key:   aws.String("Name"),
+									Value: aws.String("hoge"),
+								},
 							},
 						},
 					},
 				},
-			},
-			{
-				Instances: []*ec2.Instance{
-					{
-						InstanceId:       aws.String("i-bbbbbb"),
-						InstanceType:     aws.String("t3.small"),
-						PublicIpAddress:  aws.String("12.34.56.02"),
-						PrivateIpAddress: aws.String("192.168.10.2"),
-						Placement: &ec2.Placement{
-							AvailabilityZone: aws.String("ap-northeast-1c"),
-						},
-						Tags: []*ec2.Tag{
-							{
-								Key:   aws.String("Name"),
-								Value: aws.String("moge"),
+				{
+					Instances: []*ec2.Instance{
+						{
+							InstanceId:       aws.String("i-bbbbbb"),
+							InstanceType:     aws.String("t3.small"),
+							PublicIpAddress:  aws.String("12.34.56.02"),
+							PrivateIpAddress: aws.String("192.168.10.2"),
+							Placement: &ec2.Placement{
+								AvailabilityZone: aws.String("ap-northeast-1c"),
+							},
+							Tags: []*ec2.Tag{
+								{
+									Key:   aws.String("Name"),
+									Value: aws.String("moge"),
+								},
 							},
 						},
 					},
 				},
-			},
-			{
-				Instances: []*ec2.Instance{
-					{
-						InstanceId:       aws.String("i-cccccc"),
-						InstanceType:     aws.String("t3.medium"),
-						PrivateIpAddress: aws.String("192.168.10.3"),
-						Placement: &ec2.Placement{
-							AvailabilityZone: aws.String("ap-northeast-1c"),
-						},
-						Tags: []*ec2.Tag{
-							{
-								Key:   aws.String("Name"),
-								Value: aws.String("foo"),
+				{
+					Instances: []*ec2.Instance{
+						{
+							InstanceId:       aws.String("i-cccccc"),
+							InstanceType:     aws.String("t3.medium"),
+							PrivateIpAddress: aws.String("192.168.10.3"),
+							Placement: &ec2.Placement{
+								AvailabilityZone: aws.String("ap-northeast-1c"),
+							},
+							Tags: []*ec2.Tag{
+								{
+									Key:   aws.String("Name"),
+									Value: aws.String("foo"),
+								},
 							},
 						},
 					},
 				},
-			},
-			{
-				Instances: []*ec2.Instance{
-					{
-						InstanceId:       aws.String("i-dddddd"),
-						InstanceType:     aws.String("t3.large"),
-						PrivateIpAddress: aws.String("192.168.10.4"),
-						Placement: &ec2.Placement{
-							AvailabilityZone: aws.String("ap-northeast-1c"),
-						},
-						Tags: []*ec2.Tag{
-							{
-								Key:   aws.String("Name"),
-								Value: aws.String("baz"),
+				{
+					Instances: []*ec2.Instance{
+						{
+							InstanceId:       aws.String("i-dddddd"),
+							InstanceType:     aws.String("t3.large"),
+							PrivateIpAddress: aws.String("192.168.10.4"),
+							Placement: &ec2.Placement{
+								AvailabilityZone: aws.String("ap-northeast-1c"),
+							},
+							Tags: []*ec2.Tag{
+								{
+									Key:   aws.String("Name"),
+									Value: aws.String("baz"),
+								},
 							},
 						},
 					},
 				},
-			},
-			{
-				Instances: []*ec2.Instance{
-					{
-						InstanceId:       aws.String("i-eeeeee"),
-						InstanceType:     aws.String("t3.xlarge"),
-						PrivateIpAddress: aws.String("192.168.10.5"),
-						Placement: &ec2.Placement{
-							AvailabilityZone: aws.String("ap-northeast-1c"),
-						},
-						Tags: []*ec2.Tag{
-							{
-								Key:   aws.String("Name"),
-								Value: aws.String("bar"),
+				{
+					Instances: []*ec2.Instance{
+						{
+							InstanceId:       aws.String("i-eeeeee"),
+							InstanceType:     aws.String("t3.xlarge"),
+							PrivateIpAddress: aws.String("192.168.10.5"),
+							Placement: &ec2.Placement{
+								AvailabilityZone: aws.String("ap-northeast-1c"),
+							},
+							Tags: []*ec2.Tag{
+								{
+									Key:   aws.String("Name"),
+									Value: aws.String("bar"),
+								},
 							},
 						},
 					},
 				},
 			},
 		},
-	}, nil
-}
+	})
 
-type mockEC2ClientFaild struct {
-	ec2iface.EC2API
-}
-
-func (m *mockEC2ClientFaild) DescribeInstances(input *ec2.DescribeInstancesInput) (*ec2.DescribeInstancesOutput, error) {
-	return &ec2.DescribeInstancesOutput{
-		Reservations: []*ec2.Reservation{},
-	}, errors.New("Not Found")
-}
-
-func TestDescribeRunningEC2Instances(t *testing.T) {
-	mockSvc := &mockEC2Client{}
-	runningEC2Instances, err := DescribeRunningEC2Instances(mockSvc)
+	runningEC2s, err := m.DescribeRunningEC2s()
 	if err != nil {
 		t.Error(err)
 	}
 
-	if diff := cmp.Diff(testEC2Instances, runningEC2Instances); diff != "" {
+	if diff := cmp.Diff(testEC2s, runningEC2s); diff != "" {
 		t.Errorf("wrong result: \n%s", diff)
 	}
 }
 
-func TestDescribeNotFoundRunningEC2Instances(t *testing.T) {
-	mockEC2ClientFaild := &mockEC2ClientFaild{}
-	runningEC2Instances, err := DescribeRunningEC2Instances(mockEC2ClientFaild)
+func TestDescribeNotFoundRunningEC2s(t *testing.T) {
+	m := NewEC2Client(&mockEC2Client{
+		Error: errors.New("error occured"),
+		Resp:  ec2.DescribeInstancesOutput{},
+	})
+
+	runningEC2s, err := m.DescribeRunningEC2s()
 	if err == nil {
 		t.Error(err)
 	}
 
-	if diff := cmp.Diff([]EC2Instance(nil), runningEC2Instances); diff != "" {
+	if diff := cmp.Diff([]EC2(nil), runningEC2s); diff != "" {
 		t.Errorf("wrong result: \n%s", diff)
 	}
 }
 
-func finderEC2Testing(t *testing.T, types string, tests []EC2Instance, expectedEC2 EC2Instance) {
+func finderEC2Testing(t *testing.T, types string, tests []EC2, expectedEC2 EC2) {
 	term := fuzzyfinder.UseMockedTerminal()
 	term.SetSize(60, 10)
 
@@ -179,7 +180,7 @@ func finderEC2Testing(t *testing.T, types string, tests []EC2Instance, expectedE
 		utility.TermboxKeys(types),
 		termbox.Event{Type: termbox.EventKey, Key: termbox.KeyEnter})...)
 
-	actualEC2, err := FinderEC2Instance(tests)
+	actualEC2, err := FinderEC2(tests)
 	if err != nil {
 		t.Error("cannot get profile")
 	}
@@ -188,7 +189,7 @@ func finderEC2Testing(t *testing.T, types string, tests []EC2Instance, expectedE
 	}
 }
 
-func TestFinderEC2Instance(t *testing.T) {
+func TestFinderEC2(t *testing.T) {
 	term := fuzzyfinder.UseMockedTerminal()
 	term.SetSize(60, 10)
 
@@ -202,8 +203,8 @@ func TestFinderEC2Instance(t *testing.T) {
 				finderEC2Testing(
 					t,
 					"i-a",
-					testEC2Instances,
-					EC2Instance{
+					testEC2s,
+					EC2{
 						InstanceID:       "i-aaaaaa",
 						PublicIPAddress:  "12.34.56.01",
 						PrivateIPAddress: "192.168.10.1",
@@ -219,8 +220,8 @@ func TestFinderEC2Instance(t *testing.T) {
 			func(t *testing.T) {
 				finderEC2Testing(t,
 					"i-b",
-					testEC2Instances,
-					EC2Instance{
+					testEC2s,
+					EC2{
 						InstanceID:       "i-bbbbbb",
 						PublicIPAddress:  "12.34.56.02",
 						PrivateIPAddress: "192.168.10.2",
@@ -242,11 +243,13 @@ func TestFinderEC2Instance(t *testing.T) {
 					utility.TermboxKeys(types),
 					termbox.Event{Type: termbox.EventKey, Key: termbox.KeyEnter})...)
 
-				actual, err := FinderEC2Instance(testEC2Instances)
+				actual, err := FinderEC2(testEC2s)
 				if err == nil {
-					t.Errorf("wrong result: err is not nil\n %s", err)
+					t.Errorf("wrong result: \nerr is nil")
 				}
-				t.Logf("actual: %#v", actual)
+				if diff := cmp.Diff(EC2{}, actual); diff != "" {
+					t.Errorf("wrong result: \n%s", diff)
+				}
 			},
 		},
 	} {
