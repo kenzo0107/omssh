@@ -43,7 +43,10 @@ func GetProfiles(credentialsPath string) (profiles []string, err error) {
 				profiles = append(profiles, p)
 			}
 
-			p = l[1 : len(l)-2]
+			tmp := strings.Split(l, "[")
+			tmp = strings.Split(tmp[1], "]")
+
+			p = tmp[0]
 		}
 
 		if strings.HasPrefix(l, "role_arn") {
