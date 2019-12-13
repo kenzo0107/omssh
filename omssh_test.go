@@ -30,7 +30,6 @@ func TestConfigureSSHClient(t *testing.T) {
 	user := "ubuntu"
 	cache := cache.New(480*time.Minute, 1440*time.Minute)
 	_, privateKey := utility.SSHKeyGen(cache)
-	t.Logf("%#v", privateKey)
 	signer, err := ssh.ParsePrivateKey(privateKey)
 	if err != nil {
 		t.Error("wrong result : err is not nil")
