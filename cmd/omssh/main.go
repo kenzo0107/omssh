@@ -184,12 +184,10 @@ func main() {
 		if err != nil {
 			return err
 		}
+
 		sshClientConfig := omssh.ConfigureSSHClient(user, signer)
 
-		device := &omssh.Device{
-			Host: ec2.PublicIPAddress,
-			Port: c.String("port"),
-		}
+		device := omssh.NewDevice(ec2.PublicIPAddress, c.String("port"))
 		if err := device.SSHConnect(sshClientConfig); err != nil {
 			return err
 		}
