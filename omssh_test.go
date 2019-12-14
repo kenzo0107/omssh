@@ -15,6 +15,7 @@ import (
 )
 
 const (
+	testPort       = "2222"
 	testPrivateKey = `-----BEGIN OPENSSH PRIVATE KEY-----
 b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABFwAAAAdzc2gtcn
 NhAAAAAwEAAQAAAQEAq6otEnqrpubCsmeTs/xnaayMu6/VtaEsnFLS5qKWR0dpHqORJ0AJ
@@ -68,7 +69,7 @@ func TestSSHConnect(t *testing.T) {
 	go buildSSHServer(signer)
 
 	user := "testUser"
-	device := NewDevice("localhost", "2222")
+	device := NewDevice("localhost", testPort)
 	sshClientConfig := ConfigureSSHClient(user, signer)
 	if err := device.SSHConnect(sshClientConfig); err != nil {
 		t.Fatalf("wrong result : err is not nil. \n%s", err.Error())
@@ -89,16 +90,17 @@ func buildSSHServer(signer ssh.Signer) {
 
 	serverConfig.AddHostKey(signer)
 
-	listener, err := net.Listen("tcp", "0.0.0.0:2222")
+	target := net.JoinHostPort("0.0.0.0", testPort)
+	listener, err := net.Listen("tcp", target)
 	if err != nil {
-		log.Fatalf("Failed to listen on 2222 (%s)", err)
+		log.Fatalf("Failed to listen on %s (%s)", testPort, err)
 	}
-	log.Print("Listening on 2222...")
+	log.Printf("Listening on %s ...", testPort)
 
 	for {
 		tcpConn, err := listener.Accept()
 		if err != nil {
-			log.Fatalf("Failed to accept on 2222 (%s)", err)
+			log.Fatalf("Failed to accept on %s (%s)", testPort, err)
 		}
 
 		sshConn, chans, reqs, err := ssh.NewServerConn(tcpConn, serverConfig)
