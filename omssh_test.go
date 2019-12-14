@@ -137,12 +137,12 @@ func handleChannel(newChannel ssh.NewChannel) {
 	bash := exec.Command("bash")
 
 	close := func() {
-		if err := sshChannel.Close(); err != nil {
-			log.Fatal(err)
+		if e := sshChannel.Close(); e != nil {
+			log.Fatal(e)
 		}
-		_, err := bash.Process.Wait()
-		if err != nil {
-			log.Printf("Failed to exit bash (%s)", err)
+		_, e := bash.Process.Wait()
+		if e != nil {
+			log.Printf("Failed to exit bash (%s)", e)
 		}
 		log.Printf("Session closed")
 	}
