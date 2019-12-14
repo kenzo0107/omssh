@@ -24,8 +24,8 @@ type SSHDevice struct {
 	session *ssh.Session
 }
 
-// NewSSHDevice : new SSH device
-func NewSSHDevice(host, port string) Device {
+// NewDevice : new SSH device
+func NewDevice(host, port string) Device {
 	return &SSHDevice{
 		Host: host,
 		Port: port,

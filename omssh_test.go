@@ -68,17 +68,17 @@ func TestSSHConnect(t *testing.T) {
 	go buildSSHServer(signer)
 
 	user := "testUser"
-	device := NewSSHDevice("localhost", "2222")
+	device := NewDevice("localhost", "2222")
 	sshClientConfig := ConfigureSSHClient(user, signer)
 	if err := device.SSHConnect(sshClientConfig); err != nil {
 		t.Error("wrong result : err is not nil")
 	}
 	device.SetupIO()
 	// if err := device.StartShell(); err != nil {
-	// 	t.Error("wrong result : err is not nil")
+	// 	t.Errorf("wrong result : err is not nil. \n%#v", err)
 	// }
 	if err := device.Close(); err != nil {
-		t.Error("wrong result : err is not nil")
+		t.Errorf("wrong result : err is not nil. \n%#v", err)
 	}
 }
 
