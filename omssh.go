@@ -8,28 +8,43 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-// Device : represents a remote network device.
-type Device struct {
+// Device : device interface
+type Device interface {
+	SSHConnect(config *ssh.ClientConfig) error
+	SetupIO()
+	StartShell() error
+	Close() error
+}
+
+// SSHDevice : ssh device
+type SSHDevice struct {
 	Host    string
 	Port    string
 	client  *ssh.Client
 	session *ssh.Session
 }
 
-// ConfigureSSHClient : configure ssh client
-func ConfigureSSHClient(user string, signer ssh.Signer) *ssh.ClientConfig {
-	auth := []ssh.AuthMethod{}
-	auth = append(auth, ssh.PublicKeys(signer))
-
-	sshConfig := &ssh.ClientConfig{
-		User:            user,
-		Auth:            auth,
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+// NewSSHDevice : new SSH device
+func NewSSHDevice(host, port string) Device {
+	return &SSHDevice{
+		Host: host,
+		Port: port,
 	}
-	return sshConfig
 }
 
-func (d *Device) SSHConnect(config *ssh.ClientConfig) error {
+// ConfigureSSHClient : configure ssh client
+func ConfigureSSHClient(user string, signer ssh.Signer) *ssh.ClientConfig {
+	return &ssh.ClientConfig{
+		User: user,
+		Auth: []ssh.AuthMethod{
+			ssh.PublicKeys(signer),
+		},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	}
+}
+
+// SSHConnect : ssh connect
+func (d *SSHDevice) SSHConnect(config *ssh.ClientConfig) error {
 	target := net.JoinHostPort(d.Host, d.Port)
 	client, err := ssh.Dial("tcp", target, config)
 	if err != nil {
@@ -45,13 +60,15 @@ func (d *Device) SSHConnect(config *ssh.ClientConfig) error {
 	return nil
 }
 
-func (d *Device) SetupIO() {
+// SetupIO : set I/O
+func (d *SSHDevice) SetupIO() {
 	d.session.Stdout = os.Stdout
 	d.session.Stderr = os.Stderr
 	d.session.Stdin = os.Stdin
 }
 
-func (d *Device) StartShell() error {
+// StartShell : start shell
+func (d *SSHDevice) StartShell() error {
 	defer func() {
 		err := d.session.Close()
 		if err != nil {
@@ -79,4 +96,9 @@ func (d *Device) StartShell() error {
 		return err
 	}
 	return nil
+}
+
+// Close : close client
+func (d *SSHDevice) Close() error {
+	return d.client.Close()
 }
