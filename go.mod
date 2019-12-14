@@ -11,6 +11,7 @@ require (
 	github.com/hashicorp/go-version v1.2.0 // indirect
 	github.com/kenzo0107/sshkeygen v0.0.0-20190727143825-8bab90ec9499
 	github.com/kr/pretty v0.1.0 // indirect
+	github.com/kr/pty v1.1.1
 	github.com/ktr0731/go-fuzzyfinder v0.1.2
 	github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d
 	github.com/patrickmn/go-cache v2.1.0+incompatible
