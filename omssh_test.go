@@ -71,7 +71,7 @@ func TestSSHConnect(t *testing.T) {
 	device := NewDevice("localhost", "2222")
 	sshClientConfig := ConfigureSSHClient(user, signer)
 	if err := device.SSHConnect(sshClientConfig); err != nil {
-		t.Errorf("wrong result : err is not nil. \n%#v", err)
+		t.Fatalf("wrong result : err is not nil. \n%s", err.Error())
 	}
 	device.SetupIO()
 	// if err := device.StartShell(); err != nil {
