@@ -67,7 +67,7 @@ func (d *SSHDevice) SetupIO() {
 	d.session.Stdin = os.Stdin
 }
 
-// StartShell : start shell
+// StartShell : requests a pseudo terminal and starts the remote shell.
 func (d *SSHDevice) StartShell() error {
 	defer func() {
 		err := d.session.Close()
