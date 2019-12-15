@@ -68,6 +68,12 @@ func availablePort() string {
 	addr := l.Addr().String()
 	t := strings.Split(addr, ":")
 	port := t[1]
+	defer func() {
+		err := l.Close()
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}()
 	return port
 }
 
