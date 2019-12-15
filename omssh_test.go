@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os/exec"
+	"strings"
 	"sync"
 	"testing"
 
@@ -15,7 +16,6 @@ import (
 )
 
 const (
-	testPort       = "2222"
 	testPrivateKey = `-----BEGIN OPENSSH PRIVATE KEY-----
 b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABFwAAAAdzc2gtcn
 NhAAAAAwEAAQAAAQEAq6otEnqrpubCsmeTs/xnaayMu6/VtaEsnFLS5qKWR0dpHqORJ0AJ
@@ -60,13 +60,26 @@ func TestConfigureSSHClient(t *testing.T) {
 	}
 }
 
+func availablePort() string {
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		log.Fatal(err)
+	}
+	addr := l.Addr().String()
+	t := strings.Split(addr, ":")
+	port := t[1]
+	return port
+}
+
 func TestSSHConnect(t *testing.T) {
 	signer, err := ssh.ParsePrivateKey([]byte(testPrivateKey))
 	if err != nil {
 		t.Error("wrong result : err is not nil")
 	}
 
-	go buildSSHServer(signer)
+	testPort := availablePort()
+
+	go buildSSHServer(signer, testPort)
 
 	user := "testUser"
 	device := NewDevice("localhost", testPort)
@@ -83,7 +96,7 @@ func TestSSHConnect(t *testing.T) {
 	}
 }
 
-func buildSSHServer(signer ssh.Signer) {
+func buildSSHServer(signer ssh.Signer, testPort string) {
 	serverConfig := &ssh.ServerConfig{
 		NoClientAuth: true,
 	}
