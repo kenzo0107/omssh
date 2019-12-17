@@ -2,16 +2,14 @@ package omssh
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"net"
+	"os"
 	"os/exec"
 	"strings"
-	"sync"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/kr/pty"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -166,24 +164,9 @@ func handleChannel(newChannel ssh.NewChannel) {
 		log.Printf("Session closed")
 	}
 
-	f, err := pty.Start(bash)
-	if err != nil {
-		log.Printf("Could not start pty (%s)", err)
+	bash.Stdout = os.Stdout
+	if err := bash.Run(); err != nil {
 		close()
 		return
 	}
-
-	var once sync.Once
-	go func() {
-		if _, err := io.Copy(sshChannel, f); err != nil {
-			log.Fatal(err)
-		}
-		once.Do(close)
-	}()
-	go func() {
-		if _, err := io.Copy(f, sshChannel); err != nil {
-			log.Fatal(err)
-		}
-		once.Do(close)
-	}()
 }
