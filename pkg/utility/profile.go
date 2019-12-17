@@ -1,32 +1,33 @@
-package omssh
+package utility
 
 import (
 	"bufio"
 	"fmt"
 	"log"
 	"os"
-	"os/user"
+	"path/filepath"
 	"strings"
 
 	fuzzyfinder "github.com/ktr0731/go-fuzzyfinder"
-
-	"github.com/kenzo0107/omssh/utility"
 )
 
-// GetProfile : return profile selected in .aws/credentials
-func GetProfile(defCredentialsPath string) (profile string, err error) {
-	usr, _ := user.Current()
-	filePath := strings.Replace(defCredentialsPath, "~", usr.HomeDir, 1)
-	f, err := os.Open(filePath)
+// GetProfiles : return profiles selected in .aws/credentials
+func GetProfiles(credentialsPath string) (profiles []string, err error) {
+	f, err := os.Open(filepath.Clean(credentialsPath))
 	if err != nil {
-		fmt.Println("error")
-		return profile, err
+		log.Println(err)
+		return profiles, err
 	}
-	defer f.Close()
+
+	defer func() {
+		err = f.Close()
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}()
 
 	reader := bufio.NewReaderSize(f, 4096)
 
-	profiles := []string{}
 	var p string
 	var t []string
 	var profileWithAssumeRole string
@@ -42,22 +43,25 @@ func GetProfile(defCredentialsPath string) (profile string, err error) {
 				profiles = append(profiles, p)
 			}
 
-			p = l[1 : len(l)-2]
+			tmp := strings.Split(l, "[")
+			tmp = strings.Split(tmp[1], "]")
+
+			p = tmp[0]
 		}
 
 		if strings.HasPrefix(l, "role_arn") {
 			// role_arn line
-			p = fmt.Sprintf("%s|%s", p, utility.ConvNewline(l, ""))
+			p = fmt.Sprintf("%s|%s", p, ConvNewline(l, ""))
 		}
 
 		if strings.HasPrefix(l, "mfa_serial") {
 			// mfa_serial line
-			p = fmt.Sprintf("%s|%s", p, utility.ConvNewline(l, ""))
+			p = fmt.Sprintf("%s|%s", p, ConvNewline(l, ""))
 		}
 
 		if strings.HasPrefix(l, "source_profile") {
 			// source_profile
-			p = fmt.Sprintf("%s|%s", p, utility.ConvNewline(l, ""))
+			p = fmt.Sprintf("%s|%s", p, ConvNewline(l, ""))
 		}
 
 		if e != nil {
@@ -68,22 +72,15 @@ func GetProfile(defCredentialsPath string) (profile string, err error) {
 			break
 		}
 	}
-
-	profile, err = finderProfile(profiles)
-	if err != nil {
-		log.Fatal(err)
-		return profile, err
-	}
 	return
 }
 
-func finderProfile(profiles []string) (profile string, err error) {
+// FinderProfile : return profile selected in .aws/credentials
+func FinderProfile(profiles []string) (profile string, err error) {
 	idx, err := fuzzyfinder.FindMulti(
 		profiles,
 		func(i int) string {
-			return fmt.Sprintf("%s",
-				profiles[i],
-			)
+			return profiles[i]
 		},
 		fuzzyfinder.WithPreviewWindow(func(i, w, h int) string {
 			if i == -1 {
@@ -98,7 +95,6 @@ func finderProfile(profiles []string) (profile string, err error) {
 	)
 
 	if err != nil {
-		log.Fatal(err)
 		return profile, err
 	}
 

@@ -11,22 +11,35 @@ deps:
 	go get -v -d
 
 ## Setup
-.PHONY: deps
+.PHONY: devel-deps
 devel-deps: deps
 	GO111MODULE=off go get \
-		github.com/golang/lint/golint \
+		golang.org/x/lint/golint \
+		honnef.co/go/tools/staticcheck \
+		github.com/kisielk/errcheck \
+		golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow \
+		github.com/securego/gosec/cmd/gosec \
 		github.com/motemen/gobump/cmd/gobump \
 		github.com/Songmu/make2help/cmd/make2help
 
 ## Run tests
 .PHONY: test
 test: deps
-	go test ./...
+	go test -v -count=1 -cover ./...
+
+.PHONY: cov
+cov:
+	go test -coverprofile=cover.out ./...
+	go tool cover -html=cover.out
 
 ## Lint
 .PHONY: lint
 lint: devel-deps
 	go vet ./...
+	staticcheck ./...
+	errcheck ./...
+	# exclude G106: Audit the use of ssh.InsecureIgnoreHostKey
+	gosec -quiet -exclude=G106 ./... 
 	golint -set_exit_status ./...
 
 ## build binaries ex. make bin/omssh
@@ -50,10 +63,10 @@ help:
 .PHONY: clean
 clean:
 	rm -f bin/${NAME}
-	rm -f pkg/*
 
 .PHONY: release
 release:
 	@git tag v$(VERSION)
 	@git push --tags
 	goreleaser --rm-dist
+

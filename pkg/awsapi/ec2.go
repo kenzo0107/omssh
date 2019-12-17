@@ -1,23 +1,26 @@
-package omssh
+package awsapi
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	fuzzyfinder "github.com/ktr0731/go-fuzzyfinder"
 )
 
-// EC2Client : ec2 client
-type EC2Client struct {
-	sess *session.Session
-	svc  *ec2.EC2
+// EC2Iface : ec2 interface
+type EC2Iface interface {
+	DescribeRunningEC2s() ([]EC2, error)
 }
 
-// EC2Info : required ec2 instance information
-type EC2Info struct {
+// EC2Instance : ec2 instance
+type EC2Instance struct {
+	client ec2iface.EC2API
+}
+
+// EC2 : required ec2 instance information
+type EC2 struct {
 	InstanceID       string
 	PublicIPAddress  string
 	PrivateIPAddress string
@@ -26,14 +29,15 @@ type EC2Info struct {
 	AvailabilityZone string
 }
 
-// NewEC2 : new ec2 client
-func NewEC2(sess *session.Session) *EC2Client {
-	svc := ec2.New(sess)
-	return &EC2Client{sess, svc}
+// NewEC2Client : new ec2 client
+func NewEC2Client(svc ec2iface.EC2API) EC2Iface {
+	return &EC2Instance{
+		client: svc,
+	}
 }
 
-// GetEC2List : get list of ec2 instances
-func (d *EC2Client) GetEC2List() ([]EC2Info, error) {
+// DescribeRunningEC2s : get list of running ec2 instances
+func (i *EC2Instance) DescribeRunningEC2s() ([]EC2, error) {
 	// condition: running instance only
 	input := &ec2.DescribeInstancesInput{
 		Filters: []*ec2.Filter{
@@ -46,12 +50,12 @@ func (d *EC2Client) GetEC2List() ([]EC2Info, error) {
 		},
 	}
 
-	res, err := d.svc.DescribeInstances(input)
+	res, err := i.client.DescribeInstances(input)
 	if err != nil {
 		return nil, err
 	}
 
-	e := []EC2Info{}
+	e := []EC2{}
 	for _, r := range res.Reservations {
 		for _, i := range r.Instances {
 
@@ -75,7 +79,7 @@ func (d *EC2Client) GetEC2List() ([]EC2Info, error) {
 				privateIPAddress = *i.PrivateIpAddress
 			}
 
-			e = append(e, EC2Info{
+			e = append(e, EC2{
 				InstanceID:       *i.InstanceId,
 				InstanceType:     *i.InstanceType,
 				PublicIPAddress:  publicIPAddress,
@@ -89,8 +93,8 @@ func (d *EC2Client) GetEC2List() ([]EC2Info, error) {
 	return e, nil
 }
 
-// FinderEC2Info : find information of ec2 instance through fuzzyfinder
-func FinderEC2Info(ec2List []EC2Info) (ec2Info EC2Info, err error) {
+// FinderEC2 : find information of ec2 instance through fuzzyfinder
+func FinderEC2(ec2List []EC2) (ec2 EC2, err error) {
 	idx, err := fuzzyfinder.FindMulti(
 		ec2List,
 		func(i int) string {
@@ -116,43 +120,32 @@ func FinderEC2Info(ec2List []EC2Info) (ec2Info EC2Info, err error) {
 	)
 
 	if err != nil {
-		log.Fatal(err)
-		return ec2Info, err
+		return ec2, err
 	}
 
 	for _, i := range idx {
-		ec2Info = ec2List[i]
+		ec2 = ec2List[i]
 	}
 
-	return ec2Info, nil
+	return ec2, nil
 }
 
 // FinderUsername : find ssh username through fuzzyfinder
-func FinderUsername() (user string, err error) {
-	users := []string{
-		"ubuntu",
-		"ec2-user",
-	}
+func FinderUsername(users []string) (user string, err error) {
 	idx, err := fuzzyfinder.FindMulti(
 		users,
 		func(i int) string {
-			return fmt.Sprintf("%s",
-				users[i],
-			)
+			return users[i]
 		},
 		fuzzyfinder.WithPreviewWindow(func(i, w, h int) string {
 			if i == -1 {
 				return ""
 			}
-			return fmt.Sprintf(
-				"%s",
-				users[i],
-			)
+			return users[i]
 		}),
 	)
 
 	if err != nil {
-		log.Fatal(err)
 		return user, err
 	}
 
