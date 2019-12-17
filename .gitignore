@@ -2,3 +2,4 @@
 cmd/omssh/omssh
 bin/*
 cover.out
+dist

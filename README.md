@@ -1,5 +1,10 @@
 # oreno-mssh
 
+[![v0.0.2](https://img.shields.io/badge/package-v0.0.2-ff69b4.svg)]()
+[![GoDoc](https://godoc.org/github.com/kenzo0107/omssh?status.svg)](https://godoc.org/github.com/kenzo0107/omssh)
+[![license](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/kenzo0107/omssh/master/LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/kenzo0107/omssh)](https://goreportcard.com/report/github.com/kenzo0107/omssh)
+
 ## AWS mssh Tool wrapper
 
 This project provides an interactive cli tool using ec2-instance-connect api to connect via ssh to ec2 instance.
