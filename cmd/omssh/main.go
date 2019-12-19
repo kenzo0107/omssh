@@ -2,8 +2,6 @@ package main
 
 import (
 	"errors"
-	"flag"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -34,10 +32,7 @@ const (
 )
 
 var (
-	showVersion     bool
-	buildDate       string
-	credentialsPath string
-	defUsers        = []string{"ubuntu", "ec2-user"}
+	defUsers = []string{"ubuntu", "ec2-user"}
 
 	flags = []cli.Flag{
 		cli.StringFlag{
@@ -55,33 +50,20 @@ var (
 			Usage: "select ssh user",
 		},
 	}
+
+	app = &cli.App{
+		Name:    name,
+		Version: version,
+		Flags:   flags,
+	}
 )
 
-func init() {
-	credentialsPath = getCredentialsPath(runtime.GOOS)
-}
-
 func main() {
-	flag.BoolVar(&showVersion, "v", false, "show version")
-	flag.BoolVar(&showVersion, "version", false, "show version")
-
-	if showVersion {
-		fmt.Println("version:", version)
-		fmt.Println("build:", buildDate)
-		if err := checkLatest(version); err != nil {
-			log.Println(err)
-		}
-		return
+	app.Action = func(c *cli.Context) error {
+		credentialsPath := getCredentialsPath(runtime.GOOS)
+		return action(c, credentialsPath)
 	}
-
-	app := cli.NewApp()
-	app.Name = name
-	app.Version = version
-	app.Flags = flags
-	app.Action = action
-
-	err := app.Run(os.Args)
-	if err != nil {
+	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -125,7 +107,7 @@ func fixVersionStr(v string) string {
 	return vs[0]
 }
 
-func action(c *cli.Context) error {
+func action(c *cli.Context, credentialsPath string) error {
 	region := c.String("region")
 
 	profiles, err := utility.GetProfiles(credentialsPath)
