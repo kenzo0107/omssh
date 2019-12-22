@@ -59,10 +59,7 @@ var (
 )
 
 func main() {
-	app.Action = func(c *cli.Context) error {
-		credentialsPath := getCredentialsPath(runtime.GOOS)
-		return action(c, credentialsPath)
-	}
+	app.Action = action
 	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)
 	}
@@ -107,8 +104,12 @@ func fixVersionStr(v string) string {
 	return vs[0]
 }
 
-func action(c *cli.Context, credentialsPath string) error {
+func action(c *cli.Context) error {
+	credentialsPath := getCredentialsPath(runtime.GOOS)
+
 	region := c.String("region")
+	isUser := c.Bool("user")
+	port := c.String("port")
 
 	profiles, err := utility.GetProfiles(credentialsPath)
 	if err != nil {
@@ -165,7 +166,7 @@ func action(c *cli.Context, credentialsPath string) error {
 	}
 
 	user := defaultUser
-	if c.Bool("user") {
+	if isUser {
 		u, e := awsapi.FinderUsername(defUsers)
 		if e != nil {
 			return e
@@ -194,7 +195,7 @@ func action(c *cli.Context, credentialsPath string) error {
 	}
 
 	// ssh -i <temporary ssh private key> <user>@<public ip address>
-	log.Printf("ssh %s@%s -p %s [%s]\n", user, ec2.PublicIPAddress, c.String("port"), ec2.InstanceID)
+	log.Printf("ssh %s@%s -p %s [%s]\n", user, ec2.PublicIPAddress, port, ec2.InstanceID)
 
 	signer, err := ssh.ParsePrivateKey(privateKey)
 	if err != nil {
@@ -203,7 +204,7 @@ func action(c *cli.Context, credentialsPath string) error {
 
 	sshClientConfig := omssh.ConfigureSSHClient(user, signer)
 
-	device := omssh.NewDevice(ec2.PublicIPAddress, c.String("port"))
+	device := omssh.NewDevice(ec2.PublicIPAddress, port)
 	if err := device.SSHConnect(sshClientConfig); err != nil {
 		return err
 	}
