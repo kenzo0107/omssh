@@ -1,6 +1,7 @@
 package omssh
 
 import (
+	"log"
 	"net"
 	"os"
 
@@ -76,25 +77,28 @@ func (d *SSHDevice) SetupIO() {
 
 // StartShell : requests a pseudo terminal and starts the remote shell.
 func (d *SSHDevice) StartShell() error {
-	defer d.closeSession()
+	defer func() {
+		if err := d.session.Close(); err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	if err := d.session.RequestPty(os.Getenv("TERM"), 25, 80, modes); err != nil {
 		return err
 	}
+
 	if err := d.session.Shell(); err != nil {
 		return err
 	}
+
 	if err := d.session.Wait(); err != nil {
 		return err
 	}
+
 	return nil
 }
 
 // Close : close client
 func (d *SSHDevice) Close() error {
 	return d.client.Close()
-}
-
-func (d *SSHDevice) closeSession() error {
-	return d.session.Close()
 }
