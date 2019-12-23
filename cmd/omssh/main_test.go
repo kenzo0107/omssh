@@ -8,6 +8,14 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
+func TestGetCredentialsPathWithSharedCredentialsFile(t *testing.T) {
+	fname := filepath.Join("..", "..", "testdata", "credentials")
+	if err := os.Setenv("AWS_SHARED_CREDENTIALS_FILE", fname); err != nil {
+		t.Error("error occured in os.Setenv(\"AWS_SHARED_CREDENTIALS_FILE\")")
+	}
+	getCredentialsPath("")
+}
+
 func TestGetCredentialsPathOnWindowsWithoutHome(t *testing.T) {
 	runtimeGOOS := "windows"
 	if err := os.Setenv("AWS_SHARED_CREDENTIALS_FILE", ""); err != nil {
@@ -19,16 +27,14 @@ func TestGetCredentialsPathOnWindowsWithoutHome(t *testing.T) {
 	getCredentialsPath(runtimeGOOS)
 }
 
-func TestGetCredentialsPath(t *testing.T) {
-	fname := filepath.Join("..", "..", "testdata", "credentials")
-	if err := os.Setenv("AWS_SHARED_CREDENTIALS_FILE", fname); err != nil {
-		t.Error("error occured in os.Setenv(\"AWS_SHARED_CREDENTIALS_FILE\")")
+func TestGetCredentialsPathWithoutHomeAndNotWindows(t *testing.T) {
+	if err := os.Setenv("AWS_SHARED_CREDENTIALS_FILE", ""); err != nil {
+		t.Error(err)
 	}
-	getCredentialsPath("")
+	getCredentialsPath("darwin")
 }
 
 func TestCheckLatest(t *testing.T) {
-	version := "0.0.2-hogehoge"
 	if err := checkLatest(version); err != nil {
 		t.Error(err)
 	}

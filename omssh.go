@@ -8,6 +8,14 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+var (
+	modes = ssh.TerminalModes{
+		ssh.ECHO:          0,
+		ssh.TTY_OP_ISPEED: 14400,
+		ssh.TTY_OP_OSPEED: 14400,
+	}
+)
+
 // Device : device interface
 type Device interface {
 	SSHConnect(config *ssh.ClientConfig) error
@@ -70,31 +78,23 @@ func (d *SSHDevice) SetupIO() {
 // StartShell : requests a pseudo terminal and starts the remote shell.
 func (d *SSHDevice) StartShell() error {
 	defer func() {
-		err := d.session.Close()
-		if err != nil {
-			log.Fatalln(err)
+		if err := d.session.Close(); err != nil {
+			log.Fatal(err)
 		}
 	}()
 
-	modes := ssh.TerminalModes{
-		ssh.ECHO:          0,
-		ssh.TTY_OP_ISPEED: 14400,
-		ssh.TTY_OP_OSPEED: 14400,
-	}
-	term := os.Getenv("TERM")
-	err := d.session.RequestPty(term, 25, 80, modes)
-	if err != nil {
-		return err
-	}
-	err = d.session.Shell()
-	if err != nil {
+	if err := d.session.RequestPty(os.Getenv("TERM"), 25, 80, modes); err != nil {
 		return err
 	}
 
-	err = d.session.Wait()
-	if err != nil {
+	if err := d.session.Shell(); err != nil {
 		return err
 	}
+
+	if err := d.session.Wait(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
