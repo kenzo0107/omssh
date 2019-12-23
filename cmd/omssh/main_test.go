@@ -28,7 +28,6 @@ func TestGetCredentialsPath(t *testing.T) {
 }
 
 func TestCheckLatest(t *testing.T) {
-	version := "0.0.2-hogehoge"
 	if err := checkLatest(version); err != nil {
 		t.Error(err)
 	}
