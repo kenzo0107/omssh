@@ -15,13 +15,11 @@ import (
 func GetProfiles(credentialsPath string) (profiles []string, err error) {
 	f, err := os.Open(filepath.Clean(credentialsPath))
 	if err != nil {
-		log.Println(err)
 		return profiles, err
 	}
 
 	defer func() {
-		err = f.Close()
-		if err != nil {
+		if err := f.Close(); err != nil {
 			log.Fatalln(err)
 		}
 	}()
